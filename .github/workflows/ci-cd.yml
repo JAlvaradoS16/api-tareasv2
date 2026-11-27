@@ -63,13 +63,16 @@ jobs:
         id: nombre
         env:
           ROTA: ${{ inputs.version_rota }}
+        # GHCR exige minúsculas; ${VAR,,} las convierte en Bash.
+        # La versión rota lleva otra etiqueta: nunca pisa la imagen buena de un SHA.
         run: |
           ETIQUETA="$GITHUB_SHA"
           if [ "$ROTA" = "true" ]; then ETIQUETA="rota-$GITHUB_RUN_ID"; fi
           echo "imagen=ghcr.io/${GITHUB_REPOSITORY,,}:$ETIQUETA" >> "$GITHUB_OUTPUT"
-
       - name: "Solo para el laboratorio: romper la versión"
         if: inputs.version_rota
+        # Agrega una línea a app/__init__.py: la API no arranca en producción.
+        # Staging no cambia.
         run: |
           sed -i '/^    cfg = config or Config.desde_entorno()$/a\
               if cfg.ambiente == "produccion": raise RuntimeError("Version rota")' app/__init__.py

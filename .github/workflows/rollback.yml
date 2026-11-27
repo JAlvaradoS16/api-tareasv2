@@ -1,7 +1,10 @@
 name: Rollback
 
 # Vuelve a desplegar en staging la imagen de un commit anterior.
+permissions:
+  contents: read
 on:
+
   workflow_dispatch:
     inputs:
       sha:
@@ -9,7 +12,11 @@ on:
         required: true
 
 jobs:
+
   rollback:
+    permissions:
+      contents: read
+      packages: read
     name: Rollback en staging
     runs-on: ubuntu-latest
     environment: staging
@@ -29,7 +36,11 @@ jobs:
         run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
       - name: Desplegar la versión anterior
-        run: docker run -d --name api -p 8080:8000 -e APP_ENV=staging "$IMAGEN"
+        env:
+          IMAGEN: ${{ needs.empaquetar.outputs.imagen }}
+          APP_ENV: ${{ vars.APP_ENV || 'staging' }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: docker run -d --name api -p 8080:8000 -e APP_ENV -e API_TOKEN "$IMAGEN"
 
       - name: Smoke test
         run: bash scripts/smoke.sh http://localhost:8080

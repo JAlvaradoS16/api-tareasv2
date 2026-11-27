@@ -140,6 +140,7 @@ jobs:
   rollback:
     name: Rollback automático en producción
     needs: produccion
+    environment: produccion
     # Solo si falló producción. Si falló antes (por ejemplo staging), producción nunca cambió.
     if: failure() && needs.produccion.result == 'failure'
     runs-on: ubuntu-latest
